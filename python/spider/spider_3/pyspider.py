@@ -10,6 +10,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib
+import warnings
+warnings.simplefilter('ignore', np.RankWarning)
 
 def getHtml(url):
     try:
@@ -46,7 +48,10 @@ def analyzeData(data,yearData,predictyear,proFig=False):
     for country in data.keys():
         #数据分析
         #拟合
-        f1= np.polyfit(xdata, data[country], 3)
+        try:
+            f1= np.polyfit(xdata, data[country], 3)
+        except RankWarning:
+            pass
         p1 = np.poly1d(f1)
         print(country,'人口数据拟合方程(3次) :\n', p1)
         #拟合
@@ -67,6 +72,7 @@ def analyzeData(data,yearData,predictyear,proFig=False):
             plt.ylabel('population')
             plt.legend(loc=4)
             # plt.show()
+
             plt.savefig(country+".png")
             plt.close()
     workbook.save('preData.xls')
@@ -139,7 +145,8 @@ def spider():
 
     baseyear = 1959
     year = baseyear
-    lastyear = 2018
+    lastyear = 1961
+    yearData = list(np.arange(baseyear,lastyear+1))
     # 创建数据集合
     listData = {}
     while year <= lastyear:
@@ -166,7 +173,7 @@ def spider():
                 listData[Country] = []
             listData[Country].append(fNum)
         year += 1
-    # print (listData)  # 打印
+
     # 剔除年份不全的数据
     badkey = []
     for key in listData.keys():
@@ -174,7 +181,7 @@ def spider():
             badkey.append(key)
     for key in badkey:
         listData.pop(key)
-    return listData
+    return yearData,listData
 
 def main():
 
@@ -183,11 +190,11 @@ def main():
         if(choose=='1'):
             yearData,listData=spider()
             # 写入数据
-            writeXls('frist.xls', listData, yearData)
+            writeXls('spData.xls', listData, yearData)
             break
         elif(choose=='2'):
             try:
-                yearData,listData=readXls('frist.xls')
+                yearData,listData=readXls('spData.xls')
             except FileNotFoundError:
                 print('No such file ,please choose 1')
                 continue
@@ -196,7 +203,7 @@ def main():
             continue
 
     #进行数据分析
-    analyzeData(listData,yearData,5,True)
+    analyzeData(listData,yearData,5,False)
 
 if __name__ == "__main__":
     main()
